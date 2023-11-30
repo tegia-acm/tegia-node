@@ -33,25 +33,13 @@ tegia_folder=$(realpath ../../)
 # HOST
 #
 
-read -rp "Укажите хост для MySQL [localhost]: " mysql_host
-if [[ -z "$mysql_host" ]]; then
-    mysql_host='localhost'
-fi
-echo -e "${_OK_}set host = '$mysql_host'"
+mysql_host=$(echo $MYSQL_HOST)
 
 #
 # PORT
 #
 
-while ! [[ $mysql_port =~ ^-?[0-9]+$ ]];  do
-    read -rp "Укажите порт для MySQL, используя цифры [3306]:" mysql_port
-    if [[ -z "$mysql_port" ]]; then
-        mysql_port='3306'
-        break
-    else
-        echo -e "${_ERR_}Введено некорректное значение"
-    fi
-done
+mysql_port=$(echo $MYSQL_PORT)
 echo -e "${_OK_}set port = '$mysql_port'"
 
 #
@@ -59,15 +47,7 @@ echo -e "${_OK_}set port = '$mysql_port'"
 #
 
 mysql_user='tegia_user'
-
-while [[ -z "$mysql_password" ]]; do
-    read -srp "Укажите пароль для подключения системы к MySQL: " mysql_password
-    if [[ -z "$mysql_password" ]]; then
-        echo -e "\n${_ERR_}Пароль не может быть пустым"
-    else
-        break
-    fi
-done
+mysql_password=$(echo $MYSQL_PASSWORD)
 echo -e "\n${_OK_}tegia user = '$mysql_user'"
 echo -e "${_OK_}mysql password is set"
 
@@ -165,12 +145,12 @@ echo "${_OK_}file '$tegia_folder/tegia.cnf' is saved"
 #
 # ----------------------------------------------------------------------------------------
 
-sudo apt install -y git mc screen jq
+sudo apt install -y git mc screen jq zip
 sudo apt install -y python build-essential default-libmysqlclient-dev libtool m4 automake uuid-dev libxml2-dev
 sudo apt install -y libcurl4-openssl-dev libssl-dev
 sudo apt install -y cmake zlibc
 sudo apt install -y libbz2-dev libzip-dev unzip
-sudo apt install -y pkg-config
+sudo apt install -y pkg-config libpugixml-dev graphviz-dev
 
 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 sudo apt install -y g++-11 gcc-11
@@ -194,49 +174,11 @@ mkdir -p $tegia_folder/ui
 #
 # ----------------------------------------------------------------------------------------
 
-#
-# nlohmann json
-#
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
 
-cd $tegia_folder/vendors
-git clone https://github.com/nlohmann/json.git
-cd json
-mkdir -p build
-cd build
-cmake ..
-make
-sudo make install
-sudo ldconfig
-
-#
-# json-schema-validator
-#
-
-cd $tegia_folder/vendors
-git clone https://github.com/pboettch/json-schema-validator.git
-cd json-schema-validator
-mkdir -p build
-cd build
-cmake .. -DBUILD_SHARED_LIBS=ON ..
-make
-sudo make install
-sudo ldconfig
-
-
-
-
-#
-# Gumbo parser
-#
-
-cd $tegia_folder/vendors
-git clone https://github.com/google/gumbo-parser.git
-cd gumbo-parser
-./autogen.sh
-./configure
-make
-sudo make install
-sudo ldconfig
+sudo ./bootstrap-vcpkg.sh -disableMetrics
+sudo ./vcpkg install nlohmann-json json-schema-validator gumbo fmt vincentlaucsb-csv-parser xpack xlnt cpp-jwt duckx
 
 #
 # xml2json
